@@ -681,12 +681,22 @@ const buildDirectFieldGqlOperationFilter = ({
             } as FloatFilter,
           };
         case RecordFilterOperand.IS_NOT:
+          // SQL `NOT (x = v)` is NULL for NULL x, so NULL rows must be kept explicitly
           return {
-            not: {
-              [fieldMetadataItem.name]: {
-                eq: parseNumericFilterValue(recordFilter.value),
-              } as FloatFilter,
-            },
+            or: [
+              {
+                not: {
+                  [fieldMetadataItem.name]: {
+                    eq: parseNumericFilterValue(recordFilter.value),
+                  } as FloatFilter,
+                },
+              },
+              {
+                [fieldMetadataItem.name]: {
+                  is: 'NULL',
+                } as FloatFilter,
+              },
+            ],
           };
         default:
           throw new Error(
